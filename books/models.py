@@ -18,6 +18,15 @@ class StarsBook(models.Model):
     sum_rate = models.IntegerField(default=0)
     number_of_raters = models.IntegerField(default=0)
 
+    def __str__(self):
+        return self.book
+
+    @property
+    def average_rating(self):
+        if self.number_of_raters > 0:
+            return self.sum_rate / self.number_of_raters
+        return 0
+
 
 class StarsOfUsers(models.Model):
     from user.models import User
@@ -27,4 +36,5 @@ class StarsOfUsers(models.Model):
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return self.user
+        return self.user.username
+

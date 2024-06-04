@@ -6,7 +6,7 @@ from user.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    password = serializers.CharField(write_only=True, max_length=128)
+    password = serializers.CharField(write_only=True, max_length=128, min_length=8)
 
     class Meta:
         model = User
@@ -19,3 +19,5 @@ class UserSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'phone_number': "Telefon raqam noto'g'ri kiritildi"})
         user = User.objects.create_user(**validated_data)
         return user
+
+

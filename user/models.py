@@ -10,7 +10,8 @@ User_type_choice = (
 
 class User(AbstractUser):
     user_type = models.CharField(choices=User_type_choice, max_length=25, default='Customer')
-    phone_number = models.CharField(max_length=13, unique=True, null=True, blank=True)
+    phone_number = models.CharField(max_length=13, null=True, blank=True)
 
     def __str__(self):
         return self.username
+

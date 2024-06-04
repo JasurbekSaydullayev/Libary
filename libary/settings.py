@@ -28,7 +28,13 @@ INSTALLED_APPS = [
     # apps
     'user.apps.UserConfig',
     'books.apps.BooksConfig',
+    'rent.apps.RentConfig',
 ]
+
+CRONJOBS = [
+    ('0 22 * * *', 'rent.check_bron_books_cron')
+]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
