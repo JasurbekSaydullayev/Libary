@@ -2,7 +2,7 @@ version: '3'
 services:
   web:
     build: .
-    command: gunicorn libary.wsgi:application --bind 0.0.0.0:8000
+    command: bash entrypoint.sh
     container_name: web
     expose:
       - 8000
