@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from books.api.serializers import BookSerializer
 from user.api.serializers import UserSerializer, RentalUserSerializer
+from user.models import RentalUser
 from ..models import BookReservation, BookRent
 from datetime import datetime, timedelta
 
@@ -52,20 +53,27 @@ class RentSerializer(serializers.Serializer):
         fields = ('id',)
 
 
-class RentWithoutCustomer(serializers.ModelSerializer):
-    total_rent_cost = serializers.SerializerMethodField()
-    total_fine = serializers.SerializerMethodField()
-    rental_user = RentalUserSerializer
-    phone_number = serializers.CharField(max_length=13, write_only=True)
-
-    class Meta:
-        model = BookRent
-        fields = ['id', 'rental_user', 'phone_number', 'book', 'rent_date', 'return_date', 'daily_rate', 'fine_per_day',
-                  'total_rent_cost', 'total_fine', 'status']
-        read_only_fields = ['fine_per_day', 'return_date', 'status']
-
-    def get_total_rent_cost(self, obj):
-        return obj.calculate_total_rent_cost()
-
-    def get_total_fine(self, obj):
-        return obj.calculate_total_fine()
+# class RentWithoutCustomer(serializers.ModelSerializer):
+#     total_rent_cost = serializers.SerializerMethodField()
+#     total_fine = serializers.SerializerMethodField()
+#     rental_user = RentalUserSerializer
+#
+#     class Meta:
+#         model = BookRent
+#         fields = ['id', 'rental_user', 'book', 'rent_date', 'return_date', 'daily_rate', 'fine_per_day',
+#                   'total_rent_cost', 'total_fine', 'status']
+#         read_only_fields = ['fine_per_day', 'return_date', 'status']
+#
+#     def get_total_rent_cost(self, obj):
+#         return obj.calculate_total_rent_cost()
+#
+#     def get_total_fine(self, obj):
+#         return obj.calculate_total_fine()
+#
+#
+# class RentalUserCreateSerializer(serializers.ModelSerializer):
+#     rental_user = serializers.PrimaryKeyRelatedField(queryset=RentalUser.objects.all())
+#
+#     class Meta:
+#         model = RentalUser
+#         fields = "__all__"

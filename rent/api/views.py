@@ -8,7 +8,7 @@ from user.models import RentalUser
 from .pagination import StandardResultsSetPagination
 from .permissions import IsAdminOrOwner, IsOperatorOrSuperAdmin
 from ..models import BookReservation, BookRent
-from .serializers import BookReservationSerializer, BookRentSerializer, RentSerializer, RentWithoutCustomer
+from .serializers import BookReservationSerializer, BookRentSerializer, RentSerializer
 from django.utils import timezone
 
 from books.models import Book
@@ -143,26 +143,24 @@ class BookRentViewSet(viewsets.ModelViewSet):
                          'total_fine': book_rent.calculate_total_fine()})
 
 
-class BookRentWithoutUser(viewsets.ModelViewSet):
-    queryset = BookRent.objects.exclude(rental_user__isnull=False).all()
-    permission_classes = [IsAuthenticated, IsOperatorOrSuperAdmin]
-    serializer_class = RentWithoutCustomer
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            user_full_name = serializer.validated_data['rental_user']
-            user_phone_number = serializer.validated_data['phone_number']
-            if not check_phone_number(user_phone_number):
-                return Response({"message": "Telefon raqam noto'g'ri kiritildi"},
-                                status.HTTP_200_OK)
-            book = Book.objects.filter(id=serializer.validated_data['book']).first()
-            daily_rate = serializer.validated_data['daily_rate']
-            rental_user = RentalUser.objects.create(full_name=user_full_name, phone_number=user_phone_number)
-            return_date = timezone.now() + timezone.timedelta(days=daily_rate)
-            rental_user.save()
-            rent_book = BookRent.objects.create(rental_user=rental_user, book=book, daily_rate=daily_rate,
-                                                return_date=return_date)
-            rent_book.save()
-            return Response(
-                {"message": f"{user_full_name} Ismi va {user_phone_number} raqamli mijozga {book} kitobi berildi"})
+# class BookRentWithoutUser(viewsets.ModelViewSet):
+#     queryset = BookRent.objects.exclude(rental_user__isnull=False).all()
+#     permission_classes = [IsAuthenticated, IsOperatorOrSuperAdmin]
+#     serializer_class = RentWithoutCustomer
+#
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         if serializer.is_valid(raise_exception=True):
+#             rental_user = RentalUser.objects.filter(id=serializer.validated_data['rental_user']).first()
+#             if not rental_user:
+#                 return Response({"message": "Bunday mijoz topilmadi"},
+#                                 status=status.HTTP_404_NOT_FOUND)
+#             book = Book.objects.filter(id=serializer.validated_data['book']).first()
+#             daily_rate = serializer.validated_data['daily_rate']
+#             return_date = timezone.now() + timezone.timedelta(days=daily_rate)
+#             rent_book = BookRent.objects.create(rental_user=rental_user, book=book, daily_rate=daily_rate,
+#                                                 return_date=return_date)
+#             rent_book.save()
+#             return Response(
+#                 {
+#                     "message": f"{rental_user.full_name} Ismi va {rental_user.phone_number} raqamli mijozga {book} kitobi berildi"})

@@ -1,14 +1,15 @@
 from rest_framework import viewsets, status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
 from django.contrib.auth.hashers import make_password
 
+from rent.api.permissions import IsOperatorOrSuperAdmin
 from user.api.permissions import IsSuperAdmin, IsAdminOrOwner
-from user.api.serializers import UserSerializer
-from user.models import User
+from user.api.serializers import UserSerializer, RentalUserSerializer
+from user.models import User, RentalUser
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -39,3 +40,11 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.validated_data['password'] = make_password(serializer.validated_data['password'])
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# class CreateRentalUserViewSet(viewsets.ModelViewSet):
+#     queryset = RentalUser.objects.all()
+#     serializer_class = RentalUserSerializer
+#     authentication_classes = (JWTAuthentication, SessionAuthentication)
+#     permission_classes = [IsAuthenticated, IsOperatorOrSuperAdmin,]
+#     http_method_names = ['post', 'get']
