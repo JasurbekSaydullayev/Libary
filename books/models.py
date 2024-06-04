@@ -7,6 +7,7 @@ class Book(models.Model):
     year = models.IntegerField()
     price = models.IntegerField()
     description = models.TextField(null=True, blank=True)
+    quantity = models.IntegerField(default=1)
 
     def __str__(self):
         return self.title

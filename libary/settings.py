@@ -32,7 +32,7 @@ INSTALLED_APPS = [
 ]
 
 CRONJOBS = [
-    ('0 22 * * *', 'rent.check_bron_books_cron')
+    ('0 22 * * *', 'rent.cron.bron_cancel')
 ]
 
 

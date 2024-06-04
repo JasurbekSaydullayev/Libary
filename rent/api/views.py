@@ -9,6 +9,8 @@ from ..models import BookReservation, BookRent
 from .serializers import BookReservationSerializer, BookRentSerializer, RentSerializer
 from django.utils import timezone
 
+from books.models import Book
+
 
 class BookReservationViewSet(viewsets.ModelViewSet):
     queryset = BookReservation.objects.all()
@@ -16,6 +18,20 @@ class BookReservationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post']
     pagination_class = StandardResultsSetPagination
+
+    def create(self, request, *args, **kwargs):
+        book = Book.objects.filter(id=request.data['book']).first()
+        if not book:
+            return Response({"message": "Bunday kitob topilmadi"}, status=status.HTTP_404_NOT_FOUND)
+        if book.quantity < 1:
+            return Response({"message": "Ushbu kitob hozirda kutubxonada mavjud emas"},
+                            status=status.HTTP_200_OK)
+        serializer = BookReservationSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            book.quantity -= 1
+            book.save()
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
         if request.user.user_type == "Customer":
@@ -35,6 +51,7 @@ class BookReservationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated, IsAdminOrOwner, ])
     def cancel(self, request, pk=None):
         reservation = self.get_object()
+        reservation.book.quantity += 1
         reservation.is_active = False
         reservation.save()
         return Response({'status': 'Bron bekor qilindi'})
@@ -45,6 +62,9 @@ class BookReservationViewSet(viewsets.ModelViewSet):
         if not reservation.is_active:
             return Response(
                 {'message': "Bron foydalanuvchi tomonidan bekor qilingan yoki olib ketish vaqti o'tib ketgan"})
+        if reservation.is_confirmed:
+            return Response({"message": "Ushbu kitob allaqachon tasdiqlangan"},
+                            status=status.HTTP_200_OK)
         reservation.is_confirmed = True
         BookRent.objects.create(
             user=reservation.user,
@@ -104,6 +124,7 @@ class BookRentViewSet(viewsets.ModelViewSet):
         book_rent = self.get_object()
         book_rent.return_date = timezone.now()
         book_rent.status = "Kitob qaytarilgan"
+        book_rent.book.quantity += 1
         book_rent.save()
         return Response({'status': f'{book_rent.user} mijoz {book_rent.book} kitobini qaytardi',
                          'total_rent_cost': book_rent.calculate_total_rent_cost(),
