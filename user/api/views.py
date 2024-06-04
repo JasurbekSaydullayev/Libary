@@ -18,11 +18,19 @@ class UserViewSet(viewsets.ModelViewSet):
     authentication_classes = (JWTAuthentication, SessionAuthentication)
 
     def get_permissions(self):
-        if self.action == 'list':
-            return [IsSuperAdmin(), ]
         if self.action == 'create':
-            return [AllowAny(),]
+            return [AllowAny(), ]
         return [IsAdminOrOwner()]
+
+    def list(self, request, *args, **kwargs):
+        if request.user.is_superuser or request.user.user_type == "Operator":
+            user = User.objects.all()
+            serializer = UserSerializer(user, many=True)
+            return Response(serializer.data)
+        else:
+            user = User.objects.filter(id=request.user.id).first()
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         user = User.objects.filter(id=kwargs['pk']).first()
@@ -31,5 +39,3 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.validated_data['password'] = make_password(serializer.validated_data['password'])
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-

@@ -30,6 +30,7 @@ class RateBookAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = RateBookSerializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data['user'] = request.user
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -37,7 +38,6 @@ class RateBookAPIView(APIView):
     # example:
     # {
     #     "book": 1,
-    #     "user": 1,
     #     "star": 5,
     #     "description": "Yaxshi kitob ekan"
     # }

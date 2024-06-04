@@ -21,7 +21,7 @@ class StarsOfUsersSerializer(serializers.ModelSerializer):
 class BookSerializer(serializers.ModelSerializer):
     star = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
-    comments = StarsOfUsersSerializer(source='stars', many=True)
+    comments = StarsOfUsersSerializer(source='stars', many=True, read_only=True)
 
     class Meta:
         model = Book
@@ -37,16 +37,16 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class RateBookSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = StarsOfUsers
-        fields = ['book', 'user', 'star', 'description']
+        fields = ['book', 'star', 'description']
 
     def create(self, validated_data):
         book = validated_data.get('book')
         user = validated_data.get('user')
         star = validated_data.get('star')
 
-        # Update StarsBook table
         stars_book, created = StarsBook.objects.get_or_create(book=book)
         stars_book.sum_rate += star
         stars_book.number_of_raters += 1

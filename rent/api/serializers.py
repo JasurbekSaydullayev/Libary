@@ -1,4 +1,7 @@
 from rest_framework import serializers
+
+from books.api.serializers import BookSerializer
+from user.api.serializers import UserSerializer
 from ..models import BookReservation, BookRent
 from datetime import datetime, timedelta
 
@@ -27,6 +30,8 @@ class BookReservationSerializer(serializers.ModelSerializer):
 class BookRentSerializer(serializers.ModelSerializer):
     total_rent_cost = serializers.SerializerMethodField()
     total_fine = serializers.SerializerMethodField()
+    user = UserSerializer()
+    book = BookSerializer()
 
     class Meta:
         model = BookRent

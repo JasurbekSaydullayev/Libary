@@ -56,7 +56,6 @@ class BookRent(models.Model):
         return_date = self.return_date.astimezone(pytz.utc)
         duration = (return_date - rent_date).days
         book_cost = self.book.price
-        print(duration)
         if duration <= 0:
             return 0
         if duration > self.daily_rate:

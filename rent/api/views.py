@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+from .pagination import StandardResultsSetPagination
 from .permissions import IsAdminOrOwner, IsOperatorOrSuperAdmin
 from ..models import BookReservation, BookRent
 from .serializers import BookReservationSerializer, BookRentSerializer, RentSerializer
@@ -14,14 +15,18 @@ class BookReservationViewSet(viewsets.ModelViewSet):
     serializer_class = BookReservationSerializer
     permission_classes = [IsAuthenticated]
     http_method_names = ['get', 'post']
+    pagination_class = StandardResultsSetPagination
 
     def list(self, request, *args, **kwargs):
         if request.user.user_type == "Customer":
             reservations = BookReservation.objects.filter(user=request.user.id).all()
         elif request.user.user_type == "Operator" or request.user.is_superuser:
             reservations = BookReservation.objects.all()
-
-        serializer = self.get_serializer(reservations, many=True)
+        page = self.paginate_queryset(reservations)
+        if page is not None:
+            serializer = self.get_paginated_response(BookReservationSerializer(page, many=True).data)
+        else:
+            serializer = BookReservationSerializer(reservations, many=True)
         return Response(serializer.data)
 
     def perform_create(self, serializer):
@@ -54,6 +59,7 @@ class BookReservationViewSet(viewsets.ModelViewSet):
 class BookRentViewSet(viewsets.ModelViewSet):
     queryset = BookRent.objects.all()
     http_method_names = ['get', 'post']
+    pagination_class = StandardResultsSetPagination
 
     def get_permissions(self):
         if self.action == 'create':
@@ -70,7 +76,11 @@ class BookRentViewSet(viewsets.ModelViewSet):
             rents = BookRent.objects.filter(user=request.user.id).all()
         elif request.user.user_type == "Operator" or request.user.is_superuser:
             rents = BookRent.objects.all()
-        serializer = self.get_serializer(rents, many=True)
+        page = self.paginate_queryset(rents)
+        if page is not None:
+            serializer = self.get_paginated_response(BookRentSerializer(page, many=True).data)
+        else:
+            serializer = BookRentSerializer(rents, many=True)
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
