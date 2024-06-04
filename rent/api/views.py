@@ -28,6 +28,7 @@ class BookReservationViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_200_OK)
         serializer = BookReservationSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
+            serializer.validated_data['user'] = request.user
             book.quantity -= 1
             book.save()
             serializer.save()
@@ -122,6 +123,9 @@ class BookRentViewSet(viewsets.ModelViewSet):
             serializer_class=RentSerializer)
     def return_book(self, request, pk=None):
         book_rent = self.get_object()
+        if book_rent.status == "Kitob qaytarilgan":
+            return Response({"message": "Ushbu mijoz bu kitobni qaytarib bo'lgan"},
+                            status=status.HTTP_200_OK)
         book_rent.return_date = timezone.now()
         book_rent.status = "Kitob qaytarilgan"
         book_rent.book.quantity += 1

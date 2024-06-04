@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from books.api.permissions import IsAdminOrOperator
 from books.api.serializers import BookSerializer, RateBookSerializer
-from books.models import Book, StarsBook
+from books.models import Book, StarsBook, StarsOfUsers
 from rent.models import BookRent
 
 
@@ -32,9 +32,9 @@ class RateBookAPIView(APIView):
         book = Book.objects.filter(id=request.data['book']).first()
         if not book:
             return Response({"message": "Kiritilgan kitob topilmadi"}, status=status.HTTP_404_NOT_FOUND)
-        rent = BookRent.objects.filter(user=request.user, book=book).first()
-        if not rent:
-            return Response({"message": "Ushbu kitobga baho berish uchun avval uni o'qib ko'rishingiz kerak"},
+        rate = StarsOfUsers.objects.filter(user=request.user, book=book).first()
+        if rate:
+            return Response({"message": "Siz oldin bu kitobga baho berib bo'lgansiz"},
                             status=status.HTTP_200_OK)
         serializer = RateBookSerializer(data=request.data)
         if serializer.is_valid():

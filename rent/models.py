@@ -30,11 +30,12 @@ class BookRent(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rents')
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='rents')
     rent_date = models.DateTimeField(auto_now_add=True)
-    return_date = models.DateTimeField(null=True, blank=True)
+    return_date = models.DateTimeField()
     daily_rate = models.IntegerField()
     fine_per_day = models.FloatField(default=0.01)
     status = models.CharField(max_length=20, choices=BookRentStatus, default="Kitob berilgan")
-    finaly_price = models.FloatField(default=0)
+    rent_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    finally_price = models.FloatField(default=0)
 
     def __str__(self):
         return f'{self.user.username} rented {self.book.title}'
@@ -42,24 +43,20 @@ class BookRent(models.Model):
     def calculate_total_rent_cost(self):
         current_time = timezone.now()
         rent_date = self.rent_date.astimezone(pytz.utc)
-        if self.return_date:
-            return_date = self.return_date.astimezone(pytz.utc)
-            duration = (return_date - rent_date).days
-        else:
-            duration = (current_time - rent_date).days
-        return self.daily_rate * duration
+        day_of_rent = (current_time - rent_date).days
+        if day_of_rent > 0:
+            day_of_rent -= 1
+        self.rent_price = day_of_rent * self.book.price
+        return self.rent_price
 
     def calculate_total_fine(self):
-        if not self.return_date:
-            return 0
+        current_time = timezone.now()
         rent_date = self.rent_date.astimezone(pytz.utc)
-        return_date = self.return_date.astimezone(pytz.utc)
-        duration = (return_date - rent_date).days
-        book_cost = self.book.price
-        if duration <= 0:
-            return 0
-        if duration > self.daily_rate:
-            total_fine = (self.daily_rate * book_cost) + (book_cost * self.fine_per_day * (duration - self.daily_rate))
-        elif duration < self.daily_rate:
-            total_fine = (self.daily_rate - duration) * book_cost
-        return total_fine
+        day_of_rent = (current_time - rent_date).days
+        if day_of_rent > 0:
+            day_of_rent -= 1
+        if self.daily_rate > day_of_rent:
+            self.finally_price = self.rent_price
+        else:
+            self.finally_price = self.rent_price + (self.fine_per_day * self.rent_price * (day_of_rent - self.daily_rate))
+        return self.finally_price
