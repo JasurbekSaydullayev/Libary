@@ -11,3 +11,4 @@ class BookRentAdmin(admin.ModelAdmin):
 @admin.register(BookReservation)
 class BookReservationAdmin(admin.ModelAdmin):
     list_display = ('id', 'book', 'is_active', 'is_confirmed')
+    list_editable = ('is_active', 'is_confirmed')

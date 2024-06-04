@@ -3,10 +3,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
+from user.api.validators import check_phone_number
+from user.models import RentalUser
 from .pagination import StandardResultsSetPagination
 from .permissions import IsAdminOrOwner, IsOperatorOrSuperAdmin
 from ..models import BookReservation, BookRent
-from .serializers import BookReservationSerializer, BookRentSerializer, RentSerializer
+from .serializers import BookReservationSerializer, BookRentSerializer, RentSerializer, RentWithoutCustomer
 from django.utils import timezone
 
 from books.models import Book
@@ -106,6 +108,9 @@ class BookRentViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         reservation = BookReservation.objects.filter(id=request.data['id']).first()
+        if reservation.is_confirmed:
+            return Response({"message": "Ushbu bron oldin tasdiqlangan"},
+                            status=status.HTTP_200_OK)
         if not reservation:
             return Response({'message': "Bron topilmadi"},
                             status=status.HTTP_404_NOT_FOUND)
@@ -115,7 +120,8 @@ class BookRentViewSet(viewsets.ModelViewSet):
             return_date=reservation.expiration_date,
             daily_rate=reservation.days,
         )
-        serializer = self.get_serializer(rent)
+        reservation.is_confirmed = True
+        reservation.save()
         return Response({"message": f"{reservation.user} mijozga {reservation.book} kitobi berildi"},
                         status=status.HTTP_201_CREATED)
 
@@ -129,7 +135,34 @@ class BookRentViewSet(viewsets.ModelViewSet):
         book_rent.return_date = timezone.now()
         book_rent.status = "Kitob qaytarilgan"
         book_rent.book.quantity += 1
+        book_rent.rent_cost = book_rent.calculate_total_rent_cost()
+        book_rent.finally_cost = book_rent.calculate_total_fine()
         book_rent.save()
         return Response({'status': f'{book_rent.user} mijoz {book_rent.book} kitobini qaytardi',
                          'total_rent_cost': book_rent.calculate_total_rent_cost(),
                          'total_fine': book_rent.calculate_total_fine()})
+
+
+class BookRentWithoutUser(viewsets.ModelViewSet):
+    queryset = BookRent.objects.exclude(rental_user__isnull=False).all()
+    permission_classes = [IsAuthenticated, IsOperatorOrSuperAdmin]
+    serializer_class = RentWithoutCustomer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            user_full_name = serializer.validated_data['rental_user']
+            user_phone_number = serializer.validated_data['phone_number']
+            if not check_phone_number(user_phone_number):
+                return Response({"message": "Telefon raqam noto'g'ri kiritildi"},
+                                status.HTTP_200_OK)
+            book = Book.objects.filter(id=serializer.validated_data['book']).first()
+            daily_rate = serializer.validated_data['daily_rate']
+            rental_user = RentalUser.objects.create(full_name=user_full_name, phone_number=user_phone_number)
+            return_date = timezone.now() + timezone.timedelta(days=daily_rate)
+            rental_user.save()
+            rent_book = BookRent.objects.create(rental_user=rental_user, book=book, daily_rate=daily_rate,
+                                                return_date=return_date)
+            rent_book.save()
+            return Response(
+                {"message": f"{user_full_name} Ismi va {user_phone_number} raqamli mijozga {book} kitobi berildi"})

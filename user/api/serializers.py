@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from user.api.validators import check_phone_number
-from user.models import User
+from user.models import User, RentalUser
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -21,3 +21,9 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class RentalUserSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = RentalUser
+        fields = '__all__'

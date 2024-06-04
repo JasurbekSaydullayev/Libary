@@ -27,7 +27,9 @@ BookRentStatus = (
 
 
 class BookRent(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rents')
+    from user.models import RentalUser
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rents', null=True, blank=True)
+    rental_user = models.ForeignKey(RentalUser, on_delete=models.CASCADE, related_name='rents', null=True, blank=True)
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='rents')
     rent_date = models.DateTimeField(auto_now_add=True)
     return_date = models.DateTimeField()

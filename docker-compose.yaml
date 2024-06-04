@@ -1,0 +1,25 @@
+version: '3'
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    container_name: web
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14-alpine
+    container_name: db
+    environment:
+      - POSTGRES_DB=CRM
+      - POSTGRES_USER=jasurbek
+      - POSTGRES_PASSWORD=856329471Jas
+
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+
+volumes:
+  pgdata:

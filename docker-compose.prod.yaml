@@ -1,0 +1,38 @@
+version: '3'
+services:
+  web:
+    build: .
+    command: gunicorn Kutubxona.wsgi:application --bind 0.0.0.0:8000
+    container_name: web
+    expose:
+      - 8000
+    volumes:
+      - static_files:/app/static
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:14-alpine
+    container_name: db
+    environment:
+      - POSTGRES_DB=Library
+      - POSTGRES_USER=jasurbek
+      - POSTGRES_PASSWORD=856329471Jas
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+    volumes:
+      - static_files:/app/static
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  static_files:

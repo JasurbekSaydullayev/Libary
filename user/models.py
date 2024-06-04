@@ -15,3 +15,10 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+
+class RentalUser(models.Model):
+    full_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=13)
+
+    def __str__(self):
+        return self.full_name

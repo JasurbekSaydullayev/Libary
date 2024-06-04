@@ -1,12 +1,17 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import BookReservationViewSet, BookRentViewSet
+
+from books.api.views import BookViewSet
+from .views import BookReservationViewSet, BookRentViewSet, BookRentWithoutUser
 
 router = DefaultRouter()
 router.register('reservations', BookReservationViewSet, basename='reservations')
 router.register('rents', BookRentViewSet, basename='rents')
+router.register('rent-without-customer', BookRentWithoutUser, basename='rent-without-customer')
+
 
 urlpatterns = router.urls
+
 
 urlpatterns += [
     path('reservations/<int:pk>/cancel/', BookReservationViewSet.as_view({'post': 'cancel'}),
